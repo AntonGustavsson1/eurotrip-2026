@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Eurotrip Juli 2026</title>
+<style>
+  :root {
+    --bg: #FDFAF6;
+    --bg2: #F5F0E8;
+    --bg3: #EDE6D8;
+    --brown: #7C5C3E;
+    --brown-light: #A07850;
+    --terra: #C26940;
+    --text: #2C1F14;
+    --muted: #8A7A6A;
+    --green: #3A7D5C;
+    --green-bg: #EAF4EE;
+    --amber: #C08030;
+    --amber-bg: #FFF4E0;
+    --red: #C03030;
+    --red-bg: #FDEAEA;
+    --border: rgba(124,92,62,0.15);
+    --radius: 12px;
+    --font-display: Georgia, 'Times New Roman', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+  /* PIN LOCK */
+  #pin-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 32px; }
+  .pin-logo { font-family: var(--font-display); font-size: 28px; color: var(--brown); }
+  .pin-sub { font-size: 13px; color: var(--muted); }
+  .pin-dots { display: flex; gap: 12px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--brown-light); background: transparent; transition: background 0.15s; }
+  .pin-dot.filled { background: var(--brown); border-color: var(--brown); }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 68px); gap: 10px; }
+  .pin-key { width: 68px; height: 68px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg2); font-size: 22px; font-weight: 500; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; -webkit-tap-highlight-color: transparent; }
+  .pin-key:active { background: var(--bg3); }
+  .pin-error { font-size: 13px; color: var(--red); min-height: 20px; }
+
+  /* HEADER */
+  .site-header { position: sticky; top: 0; z-index: 100; background: rgba(253,250,246,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .header-title { font-family: var(--font-display); font-size: 17px; color: var(--brown); }
+  .header-dates { font-size: 12px; color: var(--muted); }
+
+  /* TABS */
+  .nav-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg); overflow-x: auto; scrollbar-width: none; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab { flex: 1; min-width: 64px; padding: 10px 4px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; }
+  .nav-tab.active { color: var(--brown); border-bottom-color: var(--terra); }
+
+  /* SECTIONS */
+  .section { display: none; padding: 20px 16px 80px; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .card-title { font-family: var(--font-display); font-size: 16px; color: var(--brown); margin-bottom: 4px; }
+  .card-sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+
+  /* OVERVIEW STATS */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-box { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
+  .stat-num { font-family: var(--font-display); font-size: 28px; color: var(--terra); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* TIMELINE */
+  .day-entry { position: relative; padding-left: 28px; margin-bottom: 20px; }
+  .day-entry::before { content: ''; position: absolute; left: 10px; top: 24px; bottom: -20px; width: 1px; background: var(--border); }
+  .day-entry:last-child::before { display: none; }
+  .day-dot { position: absolute; left: 5px; top: 6px; width: 11px; height: 11px; border-radius: 50%; background: var(--terra); border: 2px solid var(--bg); }
+  .day-date { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .day-title { font-family: var(--font-display); font-size: 15px; color: var(--brown); margin: 2px 0 4px; }
+  .day-hotel { font-size: 13px; color: var(--text); }
+  .day-detail { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-right: 4px; margin-top: 4px; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+
+  /* CHECKLIST */
+  .cl-group { margin-bottom: 20px; }
+  .cl-group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 8px; padding-left: 4px; }
+  .cl-item { display: flex; align-items: flex-start; gap: 12px; background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: opacity 0.2s; -webkit-tap-highlight-color: transparent; }
+  .cl-item.done { opacity: 0.45; }
+  .cl-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s, border-color 0.15s; }
+  .cl-item.done .cl-check { background: var(--green); border-color: var(--green); color: white; font-size: 13px; }
+  .cl-text { font-size: 14px; color: var(--text); }
+  .cl-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .progress-wrap { background: var(--bg2); border-radius: 20px; height: 6px; margin-bottom: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--brown), var(--terra)); border-radius: 20px; transition: width 0.3s; }
+
+  /* COSTS */
+  .cost-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .cost-row:last-child { border-bottom: none; }
+  .cost-total { font-weight: 700; font-size: 16px; color: var(--brown); }
+
+  /* INFO */
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--muted); font-size: 12px; }
+  .pin-reveal { background: var(--bg2); padding: 3px 10px; border-radius: 6px; font-family: monospace; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .pin-reveal.shown { color: var(--text); }
+
+  .map-btn { display: block; width: 100%; padding: 14px; background: var(--terra); color: white; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; margin-bottom: 16px; }
+
+  h2 { font-family: var(--font-display); font-size: 20px; color: var(--brown); margin-bottom: 16px; }
+  .alert { padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; }
+  .alert-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(192,128,48,0.2); }
+  .alert-red { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,48,48,0.2); }
+</style>
+</head>
+<body>
+
+<!-- PIN OVERLAY -->
+<div id="pin-overlay">
+  <div class="pin-logo">✈ Eurotrip 2026</div>
+  <div class="pin-sub">Ange PIN för att öppna</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-keypad">
+    <button class="pin-key" onclick="pinPress('1')">1</button>
+    <button class="pin-key" onclick="pinPress('2')">2</button>
+    <button class="pin-key" onclick="pinPress('3')">3</button>
+    <button class="pin-key" onclick="pinPress('4')">4</button>
+    <button class="pin-key" onclick="pinPress('5')">5</button>
+    <button class="pin-key" onclick="pinPress('6')">6</button>
+    <button class="pin-key" onclick="pinPress('7')">7</button>
+    <button class="pin-key" onclick="pinPress('8')">8</button>
+    <button class="pin-key" onclick="pinPress('9')">9</button>
+    <button class="pin-key" onclick="pinPress('0')" style="grid-column:2">0</button>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="site-header">
+    <div class="header-inner">
+      <div class="header-title">✈ Eurotrip 2026</div>
+      <div class="header-dates">4–21 juli</div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('oversikt')">Översikt</button>
+      <button class="nav-tab" onclick="switchTab('reseplan')">Reseplan</button>
+      <button class="nav-tab" onclick="switchTab('checklista')">Checklista</button>
+      <button class="nav-tab" onclick="switchTab('kostnader')">Kostnader</button>
+      <button class="nav-tab" onclick="switchTab('info')">Info</button>
+    </div>
+  </div>
+
+  <!-- ÖVERSIKT -->
+  <div id="tab-oversikt" class="section active">
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num">17</div><div class="stat-label">Nätter</div></div>
+      <div class="stat-box"><div class="stat-num">8</div><div class="stat-label">Länder/orter</div></div>
+      <div class="stat-box"><div class="stat-num">~4 500</div><div class="stat-label">km totalt</div></div>
+      <div class="stat-box"><div class="stat-num">4 jul</div><div class="stat-label">Avfärd</div></div>
+    </div>
+    <a class="map-btn" href="https://maps.app.goo.gl/eurotrip" target="_blank">🗺 Öppna rutt i Google Maps</a>
+    <div class="alert alert-red">💰 Au petit gravelot (17 jul): Kontant betalning krävs på plats – minst €64. Ta ut kontanter!</div>
+    <div class="alert alert-amber">⚠️ Agriturismo Marcarini: Avbokning senast 3 juli 18:30. Check-in 15:30.</div>
+    <div class="card">
+      <div class="card-title">Rutten</div>
+      <div class="card-sub">Göteborg → Europa → Göteborg</div>
+      <div style="font-size:13px; color:var(--muted); line-height:2">
+        Göteborg → Heidenau (DE) → Colmar (FR) → Annecy (FR) → Neviglie (IT) → Menton (FR) → Digne-les-Bains (FR, Route Napoléon) → Saint-Denis-lès-Bourg (FR) → Beaune/D974 → Aulx-lès-Cromary (FR) → [Köln/Frankfurt] → Hamburg → Møn (DK) → Göteborg
+      </div>
+    </div>
+  </div>
+
+  <!-- RESEPLAN -->
+  <div id="tab-reseplan" class="section">
+    <h2>Dag för dag</h2>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Fre 4 juli</div>
+      <div class="day-title">Avresa Göteborg → Heidenau</div>
+      <div class="day-hotel">🏨 Heidenauer Hotel im Park</div>
+      <div class="day-detail">~1 100 km · Färja Göteborg–Kiel</div>
+      <div><span class="badge badge-green">Hotels.com 72074204048977</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Lör 5 juli</div>
+      <div class="day-title">Heidenau – vila &amp; utforska</div>
+      <div class="day-hotel">🏨 Heidenauer Hotel im Park</div>
+      <div class="day-detail">Pirna, Sachsisk schweiz, Brauhaus Pirna på kvällen</div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Sön 6 juli</div>
+      <div class="day-title">Heidenau → Colmar</div>
+      <div class="day-hotel">🏨 Hôtel Gustave, Colmar</div>
+      <div class="day-detail">~700 km · Stopp: Autohof Jägerheim (A1 ★4.8)</div>
+      <div><span class="badge badge-green">Hotels.com 72074359690388</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Mån 7 juli</div>
+      <div class="day-title">Colmar – Petite Venise &amp; vin</div>
+      <div class="day-hotel">🏨 Hôtel Gustave, Colmar</div>
+      <div class="day-detail">Winstub Brenner, Winstub de la Ville, Alsacisk Riesling</div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Tis 8 juli</div>
+      <div class="day-title">Colmar → Annecy</div>
+      <div class="day-hotel">🏨 Neostelia, Annecy</div>
+      <div class="day-detail">~300 km · Sjö, cykling, vandring</div>
+      <div><span class="badge badge-green">Hotels.com 72074619776188</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Ons 9 juli</div>
+      <div class="day-title">Annecy – Lac d'Annecy</div>
+      <div class="day-hotel">🏨 Neostelia, Annecy</div>
+      <div class="day-detail">Cykling runt sjön ~45 km, ANTO (Michelin Bib Gourmand)</div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Tor 10 juli</div>
+      <div class="day-title">Annecy → Neviglie (Piemonte)</div>
+      <div class="day-hotel">🏨 Agriturismo Marcarini, Neviglie</div>
+      <div class="day-detail">~300 km · Check-in 15:30 · Tel: +39 0173 630004</div>
+      <div><span class="badge badge-green">Hotels.com 72074361229569</span><span class="badge badge-amber">2 714 kr</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Fre 11 juli</div>
+      <div class="day-title">Neviglie – Barolo &amp; Langhe</div>
+      <div class="day-hotel">🏨 Agriturismo Marcarini, Neviglie</div>
+      <div class="day-detail">Barolo-byn, Borgogno cantina, D974-lik vinväg</div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Lör 12 juli</div>
+      <div class="day-title">Neviglie → Menton (Rivieran)</div>
+      <div class="day-hotel">🏨 Chez MILO, Menton (Airbnb)</div>
+      <div class="day-detail">~300 km · Kod: HMEHSDBF8A · Fabrice +33 6 70 62 38 69</div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Sön 13 juli</div>
+      <div class="day-title">Menton – Côte d'Azur</div>
+      <div class="day-hotel">🏨 Chez MILO, Menton (Airbnb)</div>
+      <div class="day-detail">Stränder, gamla stan, lokalt matmarknad</div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Mån 14 juli</div>
+      <div class="day-title">Menton → Digne-les-Bains (Route Napoléon)</div>
+      <div class="day-hotel">🏨 Hôtel Le Refuge des Sources, Digne-les-Bains</div>
+      <div class="day-detail">N85 via Castellane &amp; Grasse · Nationaldag Frankrike 🇫🇷</div>
+      <div><span class="badge badge-green">Hotels.com 72075211884183</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Tis 15 juli</div>
+      <div class="day-title">Digne → Saint-Denis-lès-Bourg</div>
+      <div class="day-hotel">🏨 Le Moulin de Chamambard</div>
+      <div class="day-detail">Frukost ingår · PIN: 4611</div>
+      <div><span class="badge badge-green">Booking.com 6221715165</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Ons 16 juli</div>
+      <div class="day-title">Saint-Denis-lès-Bourg – vila</div>
+      <div class="day-hotel">🏨 Le Moulin de Chamambard</div>
+      <div class="day-detail">Beaune &amp; D974-vinvägen på hemresan</div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Tor 17 juli</div>
+      <div class="day-title">→ Aulx-lès-Cromary</div>
+      <div class="day-hotel">🏨 Au petit gravelot</div>
+      <div class="day-detail">PIN: 0957 · 💰 Kontant betalning på plats – min. €64!</div>
+      <div><span class="badge badge-red">Kontant!</span><span class="badge badge-green">Booking.com 5048910643</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Fre 18 juli</div>
+      <div class="day-title">→ Köln eller Frankfurt (ej bokat)</div>
+      <div class="day-hotel">🏨 Ej bokat ännu</div>
+      <div class="day-detail">Via Beaune D974 om ej redan gjort</div>
+      <div><span class="badge badge-amber">Boka!</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Lör 19 juli</div>
+      <div class="day-title">→ Hamburg</div>
+      <div class="day-hotel">🏨 Ej bokat ännu</div>
+      <div class="day-detail">~500 km från Köln/Frankfurt</div>
+      <div><span class="badge badge-amber">Boka!</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Sön 20 juli</div>
+      <div class="day-title">Hamburg → Møn (Danmark)</div>
+      <div class="day-hotel">🏨 Ej bokat ännu</div>
+      <div class="day-detail">Vita klipporna, cykling, havet</div>
+      <div><span class="badge badge-amber">Boka!</span></div>
+    </div>
+
+    <div class="day-entry">
+      <div class="day-dot"></div>
+      <div class="day-date">Mån 21 juli</div>
+      <div class="day-title">Møn → Göteborg – hemkomst</div>
+      <div class="day-hotel">🏠 Hemma!</div>
+      <div class="day-detail">~450 km · Färja eller broväg</div>
+    </div>
+  </div>
+
+  <!-- CHECKLISTA -->
+  <div id="tab-checklista" class="section">
+    <div class="progress-wrap"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+    <div class="cl-group">
+      <div class="cl-group-title">Före avresa</div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Ta ut kontanter – minst €64</div><div class="cl-sub">För Au petit gravelot (17 jul) – kortbetalning fungerar EJ</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Boka boende 18–20 juli</div><div class="cl-sub">Köln/Frankfurt, Hamburg, Møn – tre nätter saknas</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Bekräfta Agriturismo Marcarini</div><div class="cl-sub">Avbokning senast 3 juli 18:30 · +39 0173 630004</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Köp miljözoner-märken (Crit'Air)</div><div class="cl-sub">Frankrike: crit-air.fr – obligatoriskt i städerna</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Packa reflexväst &amp; varningstriangel</div><div class="cl-sub">Obligatoriskt i Frankrike och Italien</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Ladda ner offline-kartor (Google Maps)</div><div class="cl-sub">Frankrike, Italien, Tyskland, Danmark</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Boka bord: ANTO, Annecy</div><div class="cl-sub">Michelin Bib Gourmand 2025 · populär, boka i förväg</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Boka bord: Winstub Brenner, Colmar</div><div class="cl-sub">Petite Venise-terras · boka online</div></div></div>
+    </div>
+
+    <div class="cl-group">
+      <div class="cl-group-title">På resan</div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Frukost Moulin de Chamambard</div><div class="cl-sub">Ingår i bokningen – njut!</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Beaune &amp; D974 vinvägen</div><div class="cl-sub">Hemresan – kör via Beaune</div></div></div>
+      <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-check"></div><div><div class="cl-text">Vita klipporna på Møn</div><div class="cl-sub">Møns Klint – häftigt stopp innan hemfärd</div></div></div>
+    </div>
+  </div>
+
+  <!-- KOSTNADER -->
+  <div id="tab-kostnader" class="section">
+    <h2>Kostnadöversikt</h2>
+    <div class="card">
+      <div class="card-title">Bokade boenden</div>
+      <div class="card-sub">Bekräftade priser</div>
+      <div class="cost-row"><span>Heidenauer Hotel im Park</span><span>—</span></div>
+      <div class="cost-row"><span>Hôtel Gustave, Colmar</span><span>—</span></div>
+      <div class="cost-row"><span>Neostelia, Annecy</span><span>—</span></div>
+      <div class="cost-row"><span>Agriturismo Marcarini</span><span>2 714 kr</span></div>
+      <div class="cost-row"><span>Chez MILO, Menton (Airbnb)</span><span>—</span></div>
+      <div class="cost-row"><span>Hôtel Le Refuge des Sources</span><span>—</span></div>
+      <div class="cost-row"><span>Le Moulin de Chamambard</span><span>—</span></div>
+      <div class="cost-row"><span>Au petit gravelot <span class="badge badge-red">Kontant</span></span><span>min. €64</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Körning &amp; transport</div>
+      <div class="cost-row"><span>Franska motorvägar (péage)</span><span>~€128</span></div>
+      <div class="cost-row"><span>Bränsle (uppskattning)</span><span>—</span></div>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div id="tab-info" class="section">
+    <h2>Kontakter &amp; PIN-koder</h2>
+    <div class="card">
+      <div class="card-title">Karolina</div>
+      <div class="info-row"><div><div class="info-label">E-post</div>karolina_rosenberg@hotmail.com</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Chez MILO, Menton</div>
+      <div class="info-row"><div><div class="info-label">Airbnb-kod</div>HMEHSDBF8A</div></div>
+      <div class="info-row"><div><div class="info-label">Värd Fabrice</div>+33 6 70 62 38 69</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">PIN-koder (tryck för att visa)</div>
+      <div class="info-row">
+        <div><div class="info-label">Le Moulin de Chamambard</div>Booking.com 6221715165</div>
+        <span class="pin-reveal" onclick="togglePin(this,'4611')">••••</span>
+      </div>
+      <div class="info-row">
+        <div><div class="info-label">Au petit gravelot</div>Booking.com 5048910643</div>
+        <span class="pin-reveal" onclick="togglePin(this,'0957')">••••</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Agriturismo Marcarini</div>
+      <div class="info-row"><div><div class="info-label">Telefon</div>+39 0173 630004</div></div>
+      <div class="info-row"><div><div class="info-label">Check-in</div>15:30</div></div>
+      <div class="info-row"><div><div class="info-label">Avbokning senast</div>3 juli 18:30</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// PIN
+let pinEntry = '';
+const CORRECT = '1337';
+function pinPress(d) {
+  pinEntry += d;
+  for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i < pinEntry.length);
+  if (pinEntry.length === 4) {
+    if (pinEntry === CORRECT) {
+      document.getElementById('pin-overlay').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    } else {
+      document.getElementById('pin-error').textContent = 'Fel PIN, försök igen';
+      pinEntry = '';
+      for (let i=0;i<4;i++) document.getElementById('d'+i).classList.remove('filled');
+    }
+  }
+}
+
+// TABS
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// CHECKLIST
+function toggleCheck(el) {
+  el.classList.toggle('done');
+  el.querySelector('.cl-check').textContent = el.classList.contains('done') ? '✓' : '';
+  updateProgress();
+}
+function updateProgress() {
+  const all = document.querySelectorAll('.cl-item').length;
+  const done = document.querySelectorAll('.cl-item.done').length;
+  document.getElementById('progress').style.width = (done/all*100) + '%';
+}
+
+// PIN REVEAL
+function togglePin(el, pin) {
+  el.classList.toggle('shown');
+  el.textContent = el.classList.contains('shown') ? pin : '••••';
+}
+</script>
+</body>
+</html>
