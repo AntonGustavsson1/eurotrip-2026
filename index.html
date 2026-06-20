@@ -433,8 +433,7 @@ function pinPress(d) {
   for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i < pinEntry.length);
   if (pinEntry.length === 4) {
     if (pinEntry === CORRECT) {
-      document.getElementById('pin-overlay').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
+      unlockAndLoad();
     } else {
       document.getElementById('pin-error').textContent = 'Fel PIN, försök igen';
       pinEntry = '';
@@ -452,15 +451,42 @@ function switchTab(id) {
 }
 
 // CHECKLIST
-function toggleCheck(el) {
+async function toggleCheck(el) {
   el.classList.toggle('done');
   el.querySelector('.cl-check').textContent = el.classList.contains('done') ? '✓' : '';
   updateProgress();
+  await saveChecklist();
 }
 function updateProgress() {
   const all = document.querySelectorAll('.cl-item').length;
   const done = document.querySelectorAll('.cl-item.done').length;
   document.getElementById('progress').style.width = (done/all*100) + '%';
+}
+async function saveChecklist() {
+  const items = document.querySelectorAll('.cl-item');
+  const state = Array.from(items).map(el => el.classList.contains('done'));
+  try { await window.storage.set('checklist', JSON.stringify(state), true); } catch(e) {}
+}
+async function loadChecklist() {
+  try {
+    const result = await window.storage.get('checklist', true);
+    if (!result) return;
+    const state = JSON.parse(result.value);
+    document.querySelectorAll('.cl-item').forEach((el, i) => {
+      if (state[i]) {
+        el.classList.add('done');
+        el.querySelector('.cl-check').textContent = '✓';
+      }
+    });
+    updateProgress();
+  } catch(e) {}
+}
+// Ladda sparad data när sidan öppnas (efter PIN)
+const _origUnlock = document.getElementById ? null : null;
+function unlockAndLoad() {
+  document.getElementById('pin-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadChecklist();
 }
 
 // PIN REVEAL
